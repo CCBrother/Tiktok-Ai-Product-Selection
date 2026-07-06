@@ -1,0 +1,33 @@
+[project]
+name = "ai-product-radar"
+version = "0.1.0"
+description = "Local AI product radar for TikTok Shop viral-potential discovery."
+requires-python = ">=3.11"
+dependencies = [
+  "celery>=5.4.0",
+  "fastapi>=0.115.0",
+  "jsonschema>=4.23.0",
+  "pydantic>=2.8.0",
+  "pydantic-settings>=2.4.0",
+  "redis>=5.0.0",
+  "sqlalchemy>=2.0.0",
+  "uvicorn>=0.30.0",
+]
+
+[project.optional-dependencies]
+crawler = ["playwright>=1.45.0"]
+postgres = ["alembic>=1.13.0", "psycopg[binary]>=3.2.0"]
+dev = ["pytest>=7.0.0"]
+
+[project.scripts]
+ai-product-radar = "ai_product_radar.cli:main"
+
+[tool.setuptools.packages.find]
+include = ["ai_product_radar*"]
+
+[tool.pytest.ini_options]
+pythonpath = ["."]
+testpaths = ["tests"]
+markers = [
+  "asyncio: marks async tests",
+]
