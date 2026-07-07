@@ -3,6 +3,7 @@ __pycache__/
 .pytest_cache/
 *.egg-info/
 *.db
+backend_test.db
 .env
 .env.*
 

@@ -1,0 +1,11 @@
+.git
+.pytest_cache
+__pycache__
+*.pyc
+*.db
+dashboard/node_modules
+dashboard/.next
+dashboard/.next-dev
+dashboard/out
+raw_events
+reports

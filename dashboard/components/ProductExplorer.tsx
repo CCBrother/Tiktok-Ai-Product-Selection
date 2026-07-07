@@ -50,8 +50,8 @@ export function ProductExplorer({ products }: { products: ProductRow[] }) {
         </nav>
 
         <div className="data-status" aria-label="data source status">
-          <strong>演示数据</strong>
-          <span>产品、评分和趋势来自本地样例文件；商品图为本地占位图。</span>
+          <strong>PostgreSQL 数据</strong>
+          <span>产品、历史快照和AI评分来自后端数据库。</span>
         </div>
 
         <div className="metrics">
@@ -65,16 +65,16 @@ export function ProductExplorer({ products }: { products: ProductRow[] }) {
       <section className="radar-center panel main-panel" id="ranking">
         <div className="panel-head">
           <div>
-            <span className="eyebrow">Opportunity Ranking</span>
+            <span className="eyebrow">商机排名</span>
             <h2>顶级商机</h2>
           </div>
-          <span>{filtered.length} products</span>
+          <span>{filtered.length} 个产品</span>
         </div>
 
         <div className="filters">
           <label className="search-box">
             <Search size={17} />
-            <input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Search products" />
+            <input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="搜索产品" />
           </label>
 
           <label>
@@ -85,14 +85,14 @@ export function ProductExplorer({ products }: { products: ProductRow[] }) {
           </label>
 
           <label>
-            <span>Category</span>
+            <span>分类</span>
             <select value={category} onChange={(event) => setCategory(event.target.value)}>
               {categories.map((item) => <option key={item}>{item}</option>)}
             </select>
           </label>
 
           <label>
-            <span>Min score</span>
+            <span>最低分</span>
             <input type="number" min="0" max="100" value={minScore} onChange={(event) => setMinScore(Number(event.target.value))} />
           </label>
         </div>
@@ -108,27 +108,27 @@ export function ProductExplorer({ products }: { products: ProductRow[] }) {
         <section className="panel hero-signal">
           <div className="panel-head">
             <div>
-              <span className="eyebrow">Top Signal</span>
+              <span className="eyebrow">重点信号</span>
               <h2>今日重点</h2>
             </div>
             <span>{topProduct?.decision.recommendation_level}</span>
           </div>
-          <strong>{topProduct ? formatProductName(topProduct.product_name) : "No product"}</strong>
+          <strong>{topProduct ? formatProductName(topProduct.product_name) : "暂无产品"}</strong>
           <p>{topProduct?.score.explanation}</p>
           <div className="signal-strip">
             <span>AI {topProduct?.score.ai_score ?? 0}</span>
-            <span>Growth {topProduct?.score.growth_score ?? 0}</span>
-            <span>Viral {topProduct?.score.viral_score ?? 0}</span>
+            <span>增长 {topProduct?.score.growth_score ?? 0}</span>
+            <span>病毒传播 {topProduct?.score.viral_score ?? 0}</span>
           </div>
         </section>
 
         <section className="panel">
           <div className="panel-head">
             <div>
-              <span className="eyebrow">Trend Chart</span>
+              <span className="eyebrow">趋势图</span>
               <h2>增长趋势</h2>
             </div>
-            <span>Growth</span>
+            <span>增长</span>
           </div>
           <TrendChart products={products} />
         </section>
@@ -136,10 +136,10 @@ export function ProductExplorer({ products }: { products: ProductRow[] }) {
         <section className="panel">
           <div className="panel-head">
             <div>
-              <span className="eyebrow">Score Mix</span>
+              <span className="eyebrow">评分结构</span>
               <h2>评分结构</h2>
             </div>
-            <span>Top</span>
+            <span>最高</span>
           </div>
           <MiniScore product={products[0]} />
         </section>
@@ -150,11 +150,11 @@ export function ProductExplorer({ products }: { products: ProductRow[] }) {
 
 function MiniScore({ product }: { product: ProductRow }) {
   const scores = [
-    ["Growth", product.score.growth_score],
-    ["Trend", product.score.trend_score],
-    ["Competition", product.score.competition_score],
-    ["Profit", product.score.profit_score],
-    ["Virality", product.score.viral_score]
+    ["增长", product.score.growth_score],
+    ["趋势", product.score.trend_score],
+    ["竞争", product.score.competition_score],
+    ["利润", product.score.profit_score],
+    ["病毒传播", product.score.viral_score]
   ];
 
   return (

@@ -60,6 +60,159 @@
 
 ## 快速开始
 
+### Backend data foundation
+
+新后端位于 `backend/`，使用 FastAPI + SQLAlchemy 2.0 + PostgreSQL + Alembic + Pydantic v2。
+
+安装依赖：
+
+```bash
+python3 -m pip install -e .
+```
+
+启动 PostgreSQL：
+
+```bash
+docker-compose up postgres
+```
+
+运行迁移：
+
+```bash
+alembic -c backend/alembic.ini upgrade head
+```
+
+生成 1000 个产品和 30 天历史快照：
+
+```bash
+python3 -m backend.app.utils.seed_mock_data
+```
+
+启动后端：
+
+```bash
+python3 -m uvicorn backend.app.main:app --reload --port 8000
+```
+
+启动前端：
+
+```bash
+cd dashboard
+pnpm install
+pnpm dev
+```
+
+前端现在读取：
+
+- `GET /api/ranking`
+- `GET /api/products/{id}`
+
+后端 API：
+
+```bash
+curl http://127.0.0.1:8000/health
+curl http://127.0.0.1:8000/api/products
+curl http://127.0.0.1:8000/api/ranking
+curl -X POST http://127.0.0.1:8000/api/score/mock-product-0001
+```
+
+一键启动完整栈：
+
+```bash
+docker-compose up --build
+```
+
+Compose 会启动 PostgreSQL、运行 Alembic 迁移、灌入 mock 数据、启动 FastAPI 和 Next.js。
+
+### V0.5 TikTok data ingestion
+
+安装爬虫依赖和浏览器：
+
+```bash
+python3 -m pip install -e .
+python3 -m playwright install chromium
+```
+
+配置文件：
+
+```bash
+config/crawler.yaml
+```
+
+浏览器会复用登录状态：
+
+```bash
+storage/session/storage_state.json
+storage/session/tiktok_profile/
+```
+
+原始数据永远先落盘，不覆盖旧文件：
+
+```bash
+storage/raw/YYYY/MM/DD/product_xxx_HHMMSS_xxxxxxxx.json
+```
+
+手动抓取产品：
+
+```bash
+python3 - <<'PY'
+import asyncio
+from backend.app.crawler.product_crawler import crawl_product
+
+raw = asyncio.run(crawl_product("https://www.tiktok.com/shop/product/PRODUCT_ID"))
+print(raw["product"])
+PY
+```
+
+抓取搜索词：
+
+```bash
+python3 - <<'PY'
+import asyncio
+from backend.app.crawler.product_crawler import crawl_product_list
+
+items = asyncio.run(crawl_product_list("portable blender"))
+print(len(items))
+PY
+```
+
+将 raw JSON 入库并生成快照/AI分：
+
+```bash
+python3 - <<'PY'
+import json
+from pathlib import Path
+from backend.app.database.session import SessionLocal
+from backend.app.services.data_pipeline import ingest_product
+
+path = sorted(Path("storage/raw").glob("**/product_*.json"))[-1]
+with SessionLocal() as db:
+    result = ingest_product(db, json.loads(path.read_text()))
+    print(result["product"].product_id)
+PY
+```
+
+调度任务：
+
+- Daily: `crawl_trending_products`
+- Hourly: `update_existing_products`
+- Weekly: `refresh_categories`
+
+创建 APScheduler：
+
+```python
+from backend.app.scheduler.scheduler import create_scheduler
+
+scheduler = create_scheduler()
+scheduler.start()
+```
+
+失败任务会写入：
+
+```text
+crawler_logs(task, status, error, created_at)
+```
+
 生成日报：
 
 ```bash

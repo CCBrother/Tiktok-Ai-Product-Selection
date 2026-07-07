@@ -1,0 +1,15 @@
+crawler:
+  headless: false
+  delay_min: 3
+  delay_max: 8
+  max_products: 1000
+  timeout_ms: 30000
+  storage_state_path: storage/session/storage_state.json
+  user_data_dir: storage/session/tiktok_profile
+
+categories:
+  - beauty
+  - home
+  - kitchen
+  - pet
+  - electronics

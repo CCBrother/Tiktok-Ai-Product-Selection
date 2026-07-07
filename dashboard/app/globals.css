@@ -153,9 +153,13 @@ a {
 .metric strong {
   display: block;
   margin-top: 8px;
-  color: #fff7f5;
+  color: #8d1728;
   font-size: 25px;
   line-height: 1;
+}
+
+.radar-left .metric strong {
+  color: #fff7f5;
 }
 
 .panel,

@@ -9,12 +9,38 @@ services:
       - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
-      - ./sql/schema.sql:/docker-entrypoint-initdb.d/001_schema.sql:ro
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U radar -d ai_product_radar"]
       interval: 10s
       timeout: 5s
       retries: 5
+
+  backend:
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+    environment:
+      BACKEND_DATABASE_URL: postgresql+psycopg://radar:radar@postgres:5432/ai_product_radar
+    ports:
+      - "8000:8000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    command: >
+      sh -c "alembic -c backend/alembic.ini upgrade head &&
+             python -m backend.app.utils.seed_mock_data &&
+             uvicorn backend.app.main:app --host 0.0.0.0 --port 8000"
+
+  frontend:
+    build:
+      context: ./dashboard
+      dockerfile: Dockerfile
+    environment:
+      NEXT_PUBLIC_API_BASE: http://backend:8000
+    ports:
+      - "3000:3000"
+    depends_on:
+      - backend
 
   redis:
     image: redis:7-alpine

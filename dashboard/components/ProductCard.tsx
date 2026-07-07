@@ -7,6 +7,7 @@ import { ProductImage } from "./ProductImage";
 
 export function ProductCard({ product, rank }: { product: ProductRow; rank?: number }) {
   const level = product.decision.recommendation_level;
+  const action = product.decision.business_decision;
   return (
     <Link className="product-card" href={`/products/${product.id}`}>
       <ProductImage productName={product.product_name} />
@@ -18,11 +19,11 @@ export function ProductCard({ product, rank }: { product: ProductRow; rank?: num
         </div>
         <h3>{formatProductName(product.product_name)}</h3>
         <div className="muted">{product.category}</div>
-        <p>{product.score.explanation}</p>
+        <p>{action ? `${action}：${product.score.explanation}` : product.score.explanation}</p>
         <div className="product-signals">
-          <span><TrendingUp size={14} /> Growth {product.score.growth_score}</span>
-          <span>Profit {product.score.profit_score}</span>
-          <span>Viral {product.score.viral_score}</span>
+          <span><TrendingUp size={14} /> 增长 {product.score.growth_score}</span>
+          <span>利润 {product.score.profit_score}</span>
+          <span>病毒传播 {product.score.viral_score}</span>
         </div>
       </div>
       <div className="score" aria-label={`AI score ${product.score.ai_score}`}>

@@ -47,20 +47,20 @@ export default async function ProductDetailPage({ params }: { params: Promise<{ 
           </section>
 
           <section className="panel">
-            <h2>Score Visualization</h2>
+            <h2>评分可视化</h2>
             <ScoreBars
               items={[
-                { label: "Growth", value: score.growth_score },
-                { label: "Trend", value: score.trend_score },
-                { label: "Competition", value: score.competition_score },
-                { label: "Profit", value: score.profit_score },
-                { label: "Review", value: score.review_score },
-                { label: "Lifecycle", value: score.lifecycle_score },
-                { label: "Supply", value: score.supply_score },
-                { label: "Copy", value: score.copy_difficulty_score },
-                { label: "Content", value: score.content_score },
-                { label: "Virality", value: score.viral_score },
-                { label: "Risk", value: score.risk_score }
+                { label: "增长评分", value: score.growth_score },
+                { label: "趋势评分", value: score.trend_score },
+                { label: "竞争评分", value: score.competition_score },
+                { label: "利润评分", value: score.profit_score },
+                { label: "评论评分", value: score.review_score },
+                { label: "生命周期", value: score.lifecycle_score },
+                { label: "供应评分", value: score.supply_score },
+                { label: "复制难度", value: score.copy_difficulty_score },
+                { label: "内容评分", value: score.content_score },
+                { label: "病毒传播", value: score.viral_score },
+                { label: "风险评分", value: score.risk_score }
               ]}
             />
           </section>
@@ -146,17 +146,26 @@ function BusinessDecisionReportView({ report }: { report: BusinessDecisionReport
 }
 
 function ScriptList({ scripts }: { scripts: Array<Record<string, string>> }) {
+  const scriptLabels: Record<string, string> = {
+    hook_0_3s: "开场钩子",
+    problem_3_6s: "痛点",
+    solution_6_12s: "解决方案",
+    demo_12_20s: "演示",
+    reaction_20_25s: "反应",
+    cta_25_30s: "行动引导"
+  };
+
   return (
     <div className="script-list">
       {scripts.map((script, index) => (
         <div className="script-card" key={`${script.angle}-${index}`}>
           <strong>{script.angle}</strong>
-          <p><span>Hook</span>{script.hook_0_3s}</p>
-          <p><span>Problem</span>{script.problem_3_6s}</p>
-          <p><span>Solution</span>{script.solution_6_12s}</p>
-          <p><span>Demo</span>{script.demo_12_20s}</p>
-          <p><span>Reaction</span>{script.reaction_20_25s}</p>
-          <p><span>CTA</span>{script.cta_25_30s}</p>
+          <p><span>{scriptLabels.hook_0_3s}</span>{script.hook_0_3s}</p>
+          <p><span>{scriptLabels.problem_3_6s}</span>{script.problem_3_6s}</p>
+          <p><span>{scriptLabels.solution_6_12s}</span>{script.solution_6_12s}</p>
+          <p><span>{scriptLabels.demo_12_20s}</span>{script.demo_12_20s}</p>
+          <p><span>{scriptLabels.reaction_20_25s}</span>{script.reaction_20_25s}</p>
+          <p><span>{scriptLabels.cta_25_30s}</span>{script.cta_25_30s}</p>
         </div>
       ))}
     </div>
@@ -181,19 +190,19 @@ function LegacyReport({ product }: { product: Awaited<ReturnType<typeof fetchPro
       <p>{product.decision.reasoning}</p>
       <p>{product.score.explanation}</p>
       <div className="report-block">
-        <span>Summary</span>
+        <span>总结</span>
         <p>{explanation.summary}</p>
       </div>
       <div className="report-block">
-        <span>Risk analysis</span>
+        <span>风险分析</span>
         <p>{explanation.risk_explanation}</p>
       </div>
       <div className="report-block">
-        <span>Price guidance</span>
+        <span>定价建议</span>
         <p>{explanation.pricing_suggestion}</p>
       </div>
       <div className="report-block">
-        <span>Sourcing</span>
+        <span>供应链建议</span>
         <p>{explanation.sourcing_suggestion}</p>
       </div>
     </>
