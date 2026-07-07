@@ -12,5 +12,6 @@ reports/*.json
 
 dashboard/node_modules/
 dashboard/.next/
+dashboard/.next-dev/
 dashboard/out/
 dashboard/.env.local

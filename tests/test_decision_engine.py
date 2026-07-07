@@ -52,6 +52,9 @@ def test_decision_engine_returns_go_for_strong_product():
     assert output.video_scripts[0].hook_0_3s
     assert output.supply.supplier_availability == "HIGH"
     assert output.final_decision.launch_or_not == "Launch"
+    assert output.business_report.decision_header["objective"] == "快速病毒检测 + 高ROI测试决策"
+    assert output.business_report.should_launch["decision"] == "GO"
+    assert output.business_report.copyability["can_copy"] in {"YES", "CONDITIONAL", "NO"}
 
 
 def test_decision_engine_can_skip_weak_product():
@@ -81,3 +84,4 @@ def test_decide_product_embeds_ai_decision_engine_bundle():
     assert engine["go_no_go"]["status"] == "GO"
     assert engine["video_scripts"][0]["hook_0_3s"]
     assert "expected_roi_range" in engine["final_decision"]
+    assert engine["business_report"]["test_plan"]["window"] == "7-30天"

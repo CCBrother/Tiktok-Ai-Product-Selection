@@ -73,6 +73,19 @@ class FinalCeoDecision:
 
 
 @dataclass(frozen=True)
+class BusinessDecisionReport:
+    decision_header: dict[str, Any]
+    should_launch: dict[str, Any]
+    how_to_sell: dict[str, Any]
+    pricing: dict[str, Any]
+    tiktok_content: dict[str, Any]
+    supply_chain: dict[str, Any]
+    copyability: dict[str, Any]
+    test_plan: dict[str, Any]
+    risk_control: dict[str, Any]
+
+
+@dataclass(frozen=True)
 class DecisionEngineOutput:
     go_no_go: GoNoGoDecision
     positioning: PositioningPlan
@@ -80,6 +93,7 @@ class DecisionEngineOutput:
     video_scripts: list[VideoScript]
     supply: SupplyRecommendation
     final_decision: FinalCeoDecision
+    business_report: BusinessDecisionReport
 
     def to_dict(self) -> dict[str, Any]:
         return asdict(self)
@@ -93,6 +107,7 @@ def run_ai_decision_engine(context: ProductContext, score: ScoreBreakdown) -> De
     scripts = generate_video_scripts(product, positioning)
     supply = generate_supply_recommendation(product)
     final_decision = generate_final_ceo_decision(product, score, go_no_go, pricing, supply)
+    business_report = generate_business_report(product, score, go_no_go, positioning, pricing, scripts, supply, final_decision)
     return DecisionEngineOutput(
         go_no_go=go_no_go,
         positioning=positioning,
@@ -100,6 +115,7 @@ def run_ai_decision_engine(context: ProductContext, score: ScoreBreakdown) -> De
         video_scripts=scripts,
         supply=supply,
         final_decision=final_decision,
+        business_report=business_report,
     )
 
 
@@ -257,3 +273,205 @@ def generate_final_ceo_decision(
         recommended_budget=budget,
         expected_roi_range=f"{roi_low}%-{roi_high}%",
     )
+
+
+def generate_business_report(
+    product: ProductSignal,
+    score: ScoreBreakdown,
+    go_no_go: GoNoGoDecision,
+    positioning: PositioningPlan,
+    pricing: PricingPlan,
+    scripts: list[VideoScript],
+    supply: SupplyRecommendation,
+    final_decision: FinalCeoDecision,
+) -> BusinessDecisionReport:
+    launch_action = {
+        "GO": "推出：48小时内上架并启动小预算病毒测试",
+        "TEST": "测试：先做受控快测，不进入重仓",
+        "SKIP": "跳过：当前信号不足，不建议占用测试预算",
+    }[go_no_go.status]
+    launch_window = "7-30天"
+    risk_level = "HIGH" if score.risk_score >= 65 else "MEDIUM" if score.risk_score >= 35 else "LOW"
+    copyability = classify_copyability(product, score)
+
+    return BusinessDecisionReport(
+        decision_header={
+            "product": product.product_name,
+            "ai_score": score.ai_score,
+            "recommendation": go_no_go.status,
+            "operator_view": launch_action,
+            "objective": "快速病毒检测 + 高ROI测试决策",
+            "viral_test_window": launch_window,
+        },
+        should_launch={
+            "decision": go_no_go.status,
+            "answer": launch_action,
+            "why_now": final_decision.why_now,
+            "supporting_signals": [
+                f"Growth Score {score.growth_score}/100",
+                f"Trend Score {score.trend_score}/100",
+                f"Virality Score {score.viral_score}/100",
+                f"Competition Score {score.competition_score}/100",
+                f"Supply Score {score.supply_score}/100",
+            ],
+            "decision_rules": go_no_go.reasons,
+        },
+        how_to_sell={
+            "positioning": positioning.positioning,
+            "target_audience": positioning.target_audience,
+            "usage_scenarios": positioning.usage_scenarios,
+            "emotional_selling_point": positioning.emotional_selling_point,
+            "offer_strategy": build_offer_strategy(product, score),
+            "landing_message": build_landing_message(positioning),
+        },
+        pricing={
+            "recommended_range_usd": f"${pricing.price_min_usd}-${pricing.price_max_usd}",
+            "main_test_price_usd": pricing.price_anchor_usd,
+            "procurement_cost_range_usd": f"${pricing.cost_min_usd}-${pricing.cost_max_usd}",
+            "multiplier": pricing.multiplier,
+            "target_margin_pct": f"{round(product.gross_margin_pct)}%",
+            "test_ladder": build_price_ladder(pricing),
+            "rationale": pricing.rationale,
+        },
+        tiktok_content={
+            "content_difficulty": "LOW" if score.content_score >= 75 else "MEDIUM" if score.content_score >= 45 else "HIGH",
+            "primary_angle": scripts[0].angle if scripts else "UGC demo",
+            "first_video_batch": [script_to_dict(script) for script in scripts[:3]],
+            "creator_brief": [
+                "前3秒必须出现痛点或反差",
+                "12秒内完成产品效果展示",
+                "优先拍真实手持、桌面、出门场景",
+                "结尾用评论互动收集二次素材角度",
+            ],
+            "success_metric": "24小时互动速度、完播率、评论购买意图",
+        },
+        supply_chain={
+            "feasibility": supply.supplier_availability,
+            "supplier_availability": supply.supplier_availability,
+            "moq": supply.moq,
+            "time_to_launch": supply.time_to_launch_days,
+            "marks": supply.marks,
+            "procurement_action": build_procurement_action(product, pricing),
+            "risk": supply.risk,
+        },
+        copyability={
+            "can_copy": copyability["can_copy"],
+            "copy_difficulty": copyability["difficulty"],
+            "legal_risk": copyability["legal_risk"],
+            "complexity_risk": copyability["complexity_risk"],
+            "influencer_dependency": copyability["influencer_dependency"],
+            "replication_path": copyability["replication_path"],
+        },
+        test_plan={
+            "window": launch_window,
+            "recommended_budget": final_decision.recommended_budget,
+            "expected_win_rate": final_decision.expected_win_rate,
+            "expected_lifecycle": final_decision.expected_lifecycle_days,
+            "expected_roi_range": final_decision.expected_roi_range,
+            "first_72h_actions": [
+                "上架1个主链接和1个价格锚点变体",
+                "发布3条不同角度UGC视频",
+                "记录点击率、加购率、评论购买意图和达人二创反馈",
+            ],
+            "scale_rule": "连续2条视频达到基准互动速度且加购/评论意图明确时加预算",
+            "kill_rule": "72小时无有效互动、无加购、评论无购买意图则停止",
+        },
+        risk_control={
+            "risk_level": risk_level,
+            "risk_score": score.risk_score,
+            "watch_items": build_watch_items(product, score),
+            "operator_note": "只为7-30天病毒窗口做测试决策，不把完整市场规模作为前置条件。",
+        },
+    )
+
+
+def build_offer_strategy(product: ProductSignal, score: ScoreBreakdown) -> list[str]:
+    offers = ["单品低门槛测试"]
+    if product.impulse_buy_score >= 4:
+        offers.append("用限时折扣制造冲动购买")
+    if score.profit_score >= 70:
+        offers.append("保留套装/加购空间提高客单价")
+    if score.competition_score >= 70:
+        offers.append("抢先用差异化标题和视频角度占位")
+    return offers
+
+
+def build_landing_message(positioning: PositioningPlan) -> str:
+    audience = "、".join(positioning.target_audience[:2])
+    scenario = " / ".join(positioning.usage_scenarios[:2])
+    return f"给{audience}的{positioning.positioning}，主打{scenario}里的即时解决效果。"
+
+
+def build_price_ladder(pricing: PricingPlan) -> list[str]:
+    return [
+        f"${pricing.price_min_usd} 引流测试价",
+        f"${pricing.price_anchor_usd} 主推成交价",
+        f"${pricing.price_max_usd} 套装或高感知价值锚点",
+    ]
+
+
+def script_to_dict(script: VideoScript) -> dict[str, str]:
+    return {
+        "angle": script.angle,
+        "hook_0_3s": script.hook_0_3s,
+        "problem_3_6s": script.problem_3_6s,
+        "solution_6_12s": script.solution_6_12s,
+        "demo_12_20s": script.demo_12_20s,
+        "reaction_20_25s": script.reaction_20_25s,
+        "cta_25_30s": script.cta_25_30s,
+    }
+
+
+def build_procurement_action(product: ProductSignal, pricing: PricingPlan) -> list[str]:
+    actions = [
+        "询价3-5家供应商，确认到岸成本和交期",
+        f"目标采购成本控制在 ${pricing.cost_max_usd} 以下",
+    ]
+    if product.supplier_count > 0:
+        actions.append("优先找1688/Alibaba同款，先小MOQ验证")
+    if product.compliance_risk >= 2:
+        actions.append("上架前确认美国运输、认证、禁限售要求")
+    return actions
+
+
+def classify_copyability(product: ProductSignal, score: ScoreBreakdown) -> dict[str, Any]:
+    legal_risk = "HIGH" if product.patent_risk >= 45 or product.brand_strength >= 55 else "MEDIUM" if product.patent_risk >= 18 or product.compliance_risk >= 3 else "LOW"
+    complexity_risk = "HIGH" if product.production_complexity >= 65 or product.copy_difficulty >= 4 else "MEDIUM" if product.production_complexity >= 35 or product.copy_difficulty >= 3 else "LOW"
+    influencer_dependency = "HIGH" if product.influencer_dependency >= 65 else "MEDIUM" if product.influencer_dependency >= 35 else "LOW"
+    if score.copy_difficulty_score >= 75 and legal_risk != "HIGH" and complexity_risk != "HIGH":
+        can_copy = "YES"
+        difficulty = "LOW"
+    elif score.copy_difficulty_score >= 50 and legal_risk != "HIGH":
+        can_copy = "CONDITIONAL"
+        difficulty = "MEDIUM"
+    else:
+        can_copy = "NO"
+        difficulty = "HIGH"
+    replication_path = [
+        "先复制功能点，不复制品牌视觉和专利结构",
+        "用标题、套装、赠品或场景重新包装卖点",
+        "小批量测内容效率，再决定是否定制Logo或包装",
+    ]
+    return {
+        "can_copy": can_copy,
+        "difficulty": difficulty,
+        "legal_risk": legal_risk,
+        "complexity_risk": complexity_risk,
+        "influencer_dependency": influencer_dependency,
+        "replication_path": replication_path,
+    }
+
+
+def build_watch_items(product: ProductSignal, score: ScoreBreakdown) -> list[str]:
+    items: list[str] = []
+    if product.compliance_risk >= 2:
+        items.append("合规/认证/美国运输限制")
+    if product.shop_competitor_count >= 80:
+        items.append("竞品店铺快速增加导致价格战")
+    if product.patent_risk >= 18:
+        items.append("专利或品牌侵权风险")
+    if score.viral_score < 55:
+        items.append("互动速度不足，内容可能跑不起来")
+    if product.lead_time_days >= 15:
+        items.append("交期偏长，可能错过7-30天窗口")
+    return items or ["持续监控竞争店铺、素材疲劳和真实履约成本"]

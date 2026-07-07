@@ -1,4 +1,5 @@
 import { fetchProduct } from "../../../lib/api";
+import type { BusinessDecisionReport } from "../../../lib/api";
 import { formatProductName } from "../../../lib/productNames";
 import { LifecycleBadge } from "../../../components/LifecycleBadge";
 import { ProductImage } from "../../../components/ProductImage";
@@ -9,7 +10,7 @@ export default async function ProductDetailPage({ params }: { params: Promise<{ 
   const product = await fetchProduct(id);
   const score = product.score;
   const explanation = product.decision.explanation_bundle;
-  const blenderReport = product.product_name === "Portable Mini Blender";
+  const businessReport = explanation.ai_decision_engine?.business_report;
 
   return (
     <main className="shell">
@@ -34,49 +35,14 @@ export default async function ProductDetailPage({ params }: { params: Promise<{ 
         <div className="detail-grid">
           <section className="panel">
             <div className="panel-head">
-              <h2>{blenderReport ? "S级测试报告" : "AI Report"}</h2>
+              <h2>AI商业决策报告</h2>
               <LifecycleBadge product={product} />
             </div>
             <ProductImage productName={product.product_name} large />
-            {blenderReport ? <PortableMiniBlenderReport /> : (
-              <>
-                <p>{product.decision.reasoning}</p>
-                <p>{product.score.explanation}</p>
-                <div className="report-block">
-                  <span>Summary</span>
-                  <p>{explanation.summary}</p>
-                </div>
-                <div className="report-block">
-                  <span>Risk analysis</span>
-                  <p>{explanation.risk_explanation}</p>
-                </div>
-                <div className="report-block">
-                  <span>Price guidance</span>
-                  <p>{explanation.pricing_suggestion}</p>
-                </div>
-                <div className="report-block">
-                  <span>Sourcing</span>
-                  <p>{explanation.sourcing_suggestion}</p>
-                </div>
-                <div className="report-block">
-                  <span>Competition</span>
-                  <p>{explanation.competition_explanation}</p>
-                </div>
-                <div className="report-block">
-                  <span>Lifecycle</span>
-                  <p>{explanation.lifecycle_explanation}</p>
-                </div>
-                <div className="report-block">
-                  <span>Virality</span>
-                  <p>{explanation.virality_explanation}</p>
-                </div>
-                {explanation.alerts.length > 0 && (
-                  <div className="report-block">
-                    <span>Alerts</span>
-                    <p>{explanation.alerts.join("；")}</p>
-                  </div>
-                )}
-              </>
+            {businessReport ? (
+              <BusinessDecisionReportView report={businessReport} />
+            ) : (
+              <LegacyReport product={product} />
             )}
           </section>
 
@@ -104,68 +70,132 @@ export default async function ProductDetailPage({ params }: { params: Promise<{ 
   );
 }
 
-function PortableMiniBlenderReport() {
+function BusinessDecisionReportView({ report }: { report: BusinessDecisionReport }) {
   return (
     <div className="decision-report">
       <div className="decision-hero">
-        <span>决策等级</span>
-        <strong>S</strong>
-        <p>建议立即测试，48小时内进入快测打法。</p>
+        <span>{report.decision_header.objective}</span>
+        <strong>{report.decision_header.recommendation}</strong>
+        <p>{report.decision_header.operator_view}</p>
       </div>
 
       <div className="report-block">
-        <span>1. 是否做？</span>
-        <p><strong>建议做。</strong> 48小时内完成上架和首轮素材测试。</p>
+        <span>1. 是否推出？</span>
+        <p><strong>{report.should_launch.answer}</strong></p>
+        <p>{report.should_launch.why_now}</p>
+        <TagList items={report.should_launch.supporting_signals} />
       </div>
 
       <div className="report-block">
-        <span>2. 为什么做？</span>
-        <ul>
-          <li>7天增长 +320%</li>
-          <li>达人数量 +180%</li>
-          <li>竞争店铺仅 26 家</li>
-          <li>正在进入主升浪</li>
-          <li>评论正向率 93%</li>
-          <li>供应链成熟，1688 可一键复制</li>
-        </ul>
+        <span>2. 如何销售？</span>
+        <p><strong>定位：</strong>{report.how_to_sell.positioning}</p>
+        <p><strong>人群：</strong>{report.how_to_sell.target_audience.join("、")}</p>
+        <p><strong>场景：</strong>{report.how_to_sell.usage_scenarios.join("、")}</p>
+        <p><strong>情绪卖点：</strong>{report.how_to_sell.emotional_selling_point}</p>
+        <p><strong>落地页话术：</strong>{report.how_to_sell.landing_message}</p>
+        <TagList items={report.how_to_sell.offer_strategy} />
       </div>
 
       <div className="report-block">
-        <span>3. 怎么卖</span>
-        <p><strong>定位：</strong>便携健康果昔神器</p>
-        <p><strong>人群：</strong>健身人群、减脂人群、上班族</p>
-        <p><strong>场景：</strong>办公室、健身房、出差</p>
+        <span>3. 如何定价？</span>
+        <p><strong>建议售价：</strong>{report.pricing.recommended_range_usd}</p>
+        <p><strong>主测价格：</strong>${report.pricing.main_test_price_usd}</p>
+        <p><strong>采购成本：</strong>{report.pricing.procurement_cost_range_usd}；<strong>目标毛利：</strong>{report.pricing.target_margin_pct}</p>
+        <TagList items={report.pricing.test_ladder} />
       </div>
 
       <div className="report-block">
-        <span>4. 定价策略</span>
-        <p><strong>建议售价：</strong>$19.99 - $29.99</p>
-        <p><strong>心理锚点：</strong>低于 $20 引流；$24.99 主推款；$29.99 套装款</p>
-        <p><strong>预计成本：</strong>$6 - $9；<strong>利润率：</strong>40% - 60%</p>
+        <span>4. 如何创作热门TikTok内容？</span>
+        <p><strong>内容难度：</strong>{report.tiktok_content.content_difficulty}</p>
+        <p><strong>核心角度：</strong>{report.tiktok_content.primary_angle}</p>
+        <ScriptList scripts={report.tiktok_content.first_video_batch} />
+        <TagList items={report.tiktok_content.creator_brief} />
+        <p><strong>成功指标：</strong>{report.tiktok_content.success_metric}</p>
       </div>
 
       <div className="report-block">
-        <span>5. 视频脚本</span>
-        <p><strong>爆款UGC：</strong>“我以为这只是个普通榨汁机，结果...”</p>
-        <p>镜头：开箱、放水果、5秒搅拌、倒出成品、喝一口反应。</p>
-        <p><strong>对比型：</strong>传统榨汁机 vs 便携款。</p>
+        <span>5. 供应链可行吗？</span>
+        <p><strong>可行性：</strong>{report.supply_chain.feasibility}；<strong>MOQ：</strong>{report.supply_chain.moq}；<strong>上线周期：</strong>{report.supply_chain.time_to_launch}</p>
+        <TagList items={[...report.supply_chain.marks, ...report.supply_chain.procurement_action]} />
+        <p><strong>供应风险：</strong>{report.supply_chain.risk}</p>
       </div>
 
       <div className="report-block">
-        <span>6. 供应链建议</span>
-        <p>1688 已有成熟同款，单价约 ¥25 - ¥45，可定制 Logo，MOQ 50-200。</p>
-        <p><strong>风险：</strong>注意电池认证和美国运输要求。</p>
+        <span>6. 可以复制吗？</span>
+        <p><strong>结论：</strong>{report.copyability.can_copy}；<strong>复制难度：</strong>{report.copyability.copy_difficulty}</p>
+        <p><strong>法律风险：</strong>{report.copyability.legal_risk}；<strong>复杂性风险：</strong>{report.copyability.complexity_risk}；<strong>达人依赖：</strong>{report.copyability.influencer_dependency}</p>
+        <TagList items={report.copyability.replication_path} />
       </div>
 
       <div className="report-block">
-        <span>7. 风险提示</span>
-        <p>竞争可能在 2-3 周内上升，需 3 天内快速上架测试。</p>
+        <span>7. 7-30天快测计划</span>
+        <p><strong>预算：</strong>{report.test_plan.recommended_budget}；<strong>胜率：</strong>{report.test_plan.expected_win_rate}；<strong>ROI：</strong>{report.test_plan.expected_roi_range}</p>
+        <TagList items={report.test_plan.first_72h_actions} />
+        <p><strong>放量规则：</strong>{report.test_plan.scale_rule}</p>
+        <p><strong>停止规则：</strong>{report.test_plan.kill_rule}</p>
       </div>
 
       <div className="report-block">
-        <span>8. AI最终建议</span>
-        <p><strong>可以做，但必须快测。</strong> 1天上架，3条视频测试，7天内判断是否放量。</p>
+        <span>8. 风险控制</span>
+        <p><strong>风险等级：</strong>{report.risk_control.risk_level}；<strong>风险分：</strong>{report.risk_control.risk_score}</p>
+        <TagList items={report.risk_control.watch_items} />
+        <p>{report.risk_control.operator_note}</p>
       </div>
     </div>
+  );
+}
+
+function ScriptList({ scripts }: { scripts: Array<Record<string, string>> }) {
+  return (
+    <div className="script-list">
+      {scripts.map((script, index) => (
+        <div className="script-card" key={`${script.angle}-${index}`}>
+          <strong>{script.angle}</strong>
+          <p><span>Hook</span>{script.hook_0_3s}</p>
+          <p><span>Problem</span>{script.problem_3_6s}</p>
+          <p><span>Solution</span>{script.solution_6_12s}</p>
+          <p><span>Demo</span>{script.demo_12_20s}</p>
+          <p><span>Reaction</span>{script.reaction_20_25s}</p>
+          <p><span>CTA</span>{script.cta_25_30s}</p>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function TagList({ items }: { items: string[] }) {
+  if (!items.length) {
+    return null;
+  }
+  return (
+    <ul>
+      {items.map((item) => <li key={item}>{item}</li>)}
+    </ul>
+  );
+}
+
+function LegacyReport({ product }: { product: Awaited<ReturnType<typeof fetchProduct>> }) {
+  const explanation = product.decision.explanation_bundle;
+  return (
+    <>
+      <p>{product.decision.reasoning}</p>
+      <p>{product.score.explanation}</p>
+      <div className="report-block">
+        <span>Summary</span>
+        <p>{explanation.summary}</p>
+      </div>
+      <div className="report-block">
+        <span>Risk analysis</span>
+        <p>{explanation.risk_explanation}</p>
+      </div>
+      <div className="report-block">
+        <span>Price guidance</span>
+        <p>{explanation.pricing_suggestion}</p>
+      </div>
+      <div className="report-block">
+        <span>Sourcing</span>
+        <p>{explanation.sourcing_suggestion}</p>
+      </div>
+    </>
   );
 }

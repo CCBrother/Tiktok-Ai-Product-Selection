@@ -633,6 +633,39 @@ a {
   line-height: 1.7;
 }
 
+.script-list {
+  display: grid;
+  gap: 10px;
+  margin-top: 12px;
+}
+
+.script-card {
+  border: 1px solid rgba(184, 20, 44, 0.16);
+  border-radius: 8px;
+  padding: 12px;
+  background: #fff7f5;
+}
+
+.script-card strong {
+  display: block;
+  margin-bottom: 8px;
+  color: #520916;
+}
+
+.script-card p {
+  display: grid;
+  grid-template-columns: 88px minmax(0, 1fr);
+  gap: 8px;
+  margin: 6px 0;
+}
+
+.script-card p span {
+  color: #b8142c;
+  font-size: 12px;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
 @media (max-width: 1180px) {
   .radar-layout {
     grid-template-columns: 240px minmax(0, 1fr);
