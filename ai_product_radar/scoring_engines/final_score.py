@@ -8,5 +8,5 @@ NORMALIZED_WEIGHTS = normalize_weights(WEIGHTED_SCORING_CONFIG)
 
 
 def aggregate_final_score(component_scores: dict[str, int]) -> int:
-    final_score = sum(component_scores[key] * NORMALIZED_WEIGHTS[key] for key in NORMALIZED_WEIGHTS)
+    final_score = sum(component_scores.get(key, 0) * NORMALIZED_WEIGHTS[key] for key in NORMALIZED_WEIGHTS)
     return normalize_score(final_score)

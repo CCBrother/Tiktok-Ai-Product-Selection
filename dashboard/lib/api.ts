@@ -17,6 +17,7 @@ export type ProductRow = {
     copy_difficulty_score: number;
     content_score: number;
     viral_score: number;
+    risk_score: number;
     explanation: string;
   };
   decision: {
@@ -57,5 +58,6 @@ export async function fetchProduct(id: string): Promise<ProductRow> {
   if (!res.ok) {
     throw new Error("Failed to load product");
   }
-  return res.json();
+  const data = await res.json();
+  return data.data ?? data;
 }

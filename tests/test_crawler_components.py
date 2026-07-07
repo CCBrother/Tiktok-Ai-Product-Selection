@@ -1,4 +1,4 @@
-import pytest
+import asyncio
 
 from ai_product_radar.crawler.parsers import CreatorParser, ProductParser, ShopParser, VideoParser, parse_count
 from ai_product_radar.crawler.proxy import ProxyManager
@@ -43,8 +43,7 @@ def test_proxy_manager_builds_playwright_proxy():
     assert proxy == {"server": "http://127.0.0.1:8080", "username": "u", "password": "p"}
 
 
-@pytest.mark.asyncio
-async def test_anti_block_retry_retries_until_success():
+def test_anti_block_retry_retries_until_success():
     attempts = {"count": 0}
 
     async def flaky():
@@ -53,7 +52,7 @@ async def test_anti_block_retry_retries_until_success():
             raise RuntimeError("blocked")
         return "ok"
 
-    assert await anti_block_retry(flaky, attempts=2, base_delay_s=0) == "ok"
+    assert asyncio.run(anti_block_retry(flaky, attempts=2, base_delay_s=0)) == "ok"
 
 
 def test_dry_run_writes_events(tmp_path):

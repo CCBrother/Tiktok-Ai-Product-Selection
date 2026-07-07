@@ -42,6 +42,8 @@ class ScoreEngineResult:
 def score_with_engines(product: ProductSignal) -> ScoreEngineResult:
     copy_score = calculate_copy_score(product)
     lifecycle = classify_lifecycle(product.lifecycle_stage, product.days_since_first_seen)
+    momentum = detect_momentum_signals(product)
+    risk_score = calculate_risk_score(product, momentum.decay_score)
     component_scores = {
         "growth_score": calculate_growth_score(product),
         "trend_score": calculate_trend_score(product),
@@ -53,14 +55,13 @@ def score_with_engines(product: ProductSignal) -> ScoreEngineResult:
         "copy_difficulty_score": copy_score,
         "content_score": calculate_content_score(product),
         "viral_score": calculate_virality_score(product),
+        "risk_score": risk_score,
     }
     raw_final = aggregate_final_score(component_scores)
     calibrated_final = calibrate_score(raw_final)
     anomaly_adjustment = calculate_anomaly_adjustment(product)
     final_score = apply_anomaly_adjustment(calibrated_final, anomaly_adjustment)
-    momentum = detect_momentum_signals(product)
     opportunity_score = calculate_opportunity_score(component_scores, momentum.momentum_score)
-    risk_score = calculate_risk_score(product, momentum.decay_score)
     confidence_score = calculate_confidence_score(product, lifecycle.confidence)
 
     return ScoreEngineResult(

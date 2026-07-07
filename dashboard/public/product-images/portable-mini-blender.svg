@@ -1,0 +1,35 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 240" role="img" aria-labelledby="title desc">
+  <title id="title">Portable Mini Blender</title>
+  <desc id="desc">A compact red portable blender with fruit smoothie ingredients.</desc>
+  <defs>
+    <linearGradient id="bg" x1="0" x2="1" y1="0" y2="1">
+      <stop offset="0" stop-color="#fff3f1"/>
+      <stop offset="1" stop-color="#f4c9c3"/>
+    </linearGradient>
+    <linearGradient id="jar" x1="0" x2="0" y1="0" y2="1">
+      <stop offset="0" stop-color="#ffffff" stop-opacity=".9"/>
+      <stop offset="1" stop-color="#ffd9d4" stop-opacity=".68"/>
+    </linearGradient>
+    <linearGradient id="red" x1="0" x2="1" y1="0" y2="1">
+      <stop offset="0" stop-color="#e85b6a"/>
+      <stop offset="1" stop-color="#8f1024"/>
+    </linearGradient>
+  </defs>
+  <rect width="320" height="240" rx="18" fill="url(#bg)"/>
+  <circle cx="74" cy="58" r="26" fill="#e85b6a" opacity=".18"/>
+  <circle cx="246" cy="68" r="36" fill="#b8142c" opacity=".12"/>
+  <ellipse cx="160" cy="203" rx="94" ry="14" fill="#7a1020" opacity=".12"/>
+  <path d="M118 45h84l-8 116c-1.2 18-15.8 32-33.8 32h-.4c-18 0-32.6-14-33.8-32L118 45Z" fill="url(#jar)" stroke="#c78986" stroke-width="5"/>
+  <path d="M130 76h60l-5 70c-.8 12-10.6 21.5-22.7 21.5h-4.6c-12.1 0-21.9-9.5-22.7-21.5l-5-70Z" fill="#ffebe8"/>
+  <path d="M126 46h68v24h-68z" fill="#fff8f7" stroke="#c78986" stroke-width="5"/>
+  <path d="M134 171h52c12 0 22 10 22 22v9H112v-9c0-12 10-22 22-22Z" fill="url(#red)"/>
+  <circle cx="160" cy="190" r="9" fill="#fff3f1"/>
+  <path d="M142 121c19-11 31-10 49 0-10 20-39 22-49 0Z" fill="#e85b6a" opacity=".86"/>
+  <circle cx="143" cy="101" r="11" fill="#d9a65f"/>
+  <circle cx="174" cy="97" r="13" fill="#b8142c"/>
+  <path d="M158 135l-19 12m20-12 21 12m-21-12 1-24" stroke="#8f1024" stroke-width="5" stroke-linecap="round"/>
+  <path d="M74 168c13-14 31-15 44-3-14 13-32 15-44 3Z" fill="#2d7a58"/>
+  <circle cx="67" cy="167" r="13" fill="#d9a65f"/>
+  <circle cx="244" cy="160" r="18" fill="#b8142c"/>
+  <path d="M234 142c11-8 23-7 32 2-10 9-23 9-32-2Z" fill="#2d7a58"/>
+</svg>

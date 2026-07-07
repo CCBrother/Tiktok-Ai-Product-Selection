@@ -8,7 +8,9 @@ from ai_product_radar.api_layer.errors import AppError, register_error_handlers
 from ai_product_radar.api_layer.responses import BaseResponse, ListResponse
 from ai_product_radar.core.config import get_settings
 from ai_product_radar.core.logging import configure_logging
-from ai_product_radar.db.repository import CsvProductRepository
+from ai_product_radar.db.repository import CsvProductRepository, DatabaseProductRepository, ProductRepository
+from ai_product_radar.db.session import SessionLocal
+from ai_product_radar.integrated_system import system_overview
 
 
 configure_logging()
@@ -25,12 +27,23 @@ app.add_middleware(
 app.add_middleware(OptionalAuthMiddleware)
 register_error_handlers(app)
 
-repository = CsvProductRepository(settings.product_radar_data)
+def build_repository() -> ProductRepository:
+    if settings.api_data_source.lower() in {"database", "postgres", "postgresql", "db"}:
+        return DatabaseProductRepository(SessionLocal)
+    return CsvProductRepository(settings.product_radar_data)
+
+
+repository = build_repository()
 
 
 @app.get("/health")
 def health() -> BaseResponse[dict[str, str]]:
     return BaseResponse(data={"status": "ok", "environment": settings.environment})
+
+
+@app.get("/system")
+def system() -> BaseResponse[dict]:
+    return BaseResponse(data=system_overview())
 
 
 @app.get("/products")
@@ -94,49 +107,3 @@ def lifecycle(limit: int = Query(default=100, ge=1, le=500)) -> ListResponse[dic
 @app.post("/recompute-score")
 def recompute_score() -> BaseResponse[dict[str, str]]:
     return BaseResponse(data={"status": "ok"})
-
-
-@app.get("/ai-scores")
-def ai_scores(limit: int = Query(default=100, ge=1, le=500)) -> dict[str, object]:
-    scores = repository.ai_scores(limit=limit)
-    return {"items": scores, "count": len(scores)}
-
-
-@app.get("/trending")
-def trending(limit: int = Query(default=20, ge=1, le=100)) -> dict[str, object]:
-    products = repository.trending(limit=limit)
-    return {"items": products, "count": len(products)}
-
-
-@app.get("/blue-ocean")
-def blue_ocean(limit: int = Query(default=20, ge=1, le=100)) -> dict[str, object]:
-    products = repository.blue_ocean(limit=limit)
-    return {"items": products, "count": len(products)}
-
-
-@app.get("/opportunity")
-def opportunity(limit: int = Query(default=20, ge=1, le=100)) -> dict[str, object]:
-    products = repository.opportunities(limit=limit)
-    return {"items": products, "count": len(products)}
-
-
-@app.post("/recompute-score")
-def recompute_score(product_id: str | None = None) -> dict[str, object]:
-    if product_id:
-        product = repository.get_product(product_id)
-        if product is None:
-            raise HTTPException(status_code=404, detail="Product not found")
-        return {"status": "ok", "updated": 1, "item": product}
-    scores = repository.ai_scores(limit=500)
-    return {"status": "ok", "updated": len(scores)}
-
-
-@app.get("/dashboard-summary")
-def dashboard_summary() -> dict[str, object]:
-    return repository.dashboard_summary()
-
-
-@app.get("/lifecycle")
-def lifecycle(limit: int = Query(default=100, ge=1, le=500)) -> dict[str, object]:
-    rows = repository.lifecycle(limit=limit)
-    return {"items": rows, "count": len(rows)}

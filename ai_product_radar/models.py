@@ -73,6 +73,7 @@ class ScoreBreakdown:
     copy_difficulty_score: int
     content_score: int
     viral_score: int
+    risk_score: int
     easy_copy_score: int
     blue_ocean_score: int
     risk_penalty: int

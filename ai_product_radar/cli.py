@@ -42,7 +42,13 @@ def parse_args() -> argparse.Namespace:
     timeline.add_argument("--output", type=Path, default=Path("data/product_history.csv"))
     timeline.add_argument("--date", type=date.fromisoformat, default=date.today())
 
+    ingest = subparsers.add_parser("ingest", help="Load raw JSONL events into the configured SQL database.")
+    ingest.add_argument("--input", type=Path, default=Path("raw_events/tiktok_shop.jsonl"))
+    ingest.add_argument("--date", type=date.fromisoformat, default=date.today())
+    ingest.add_argument("--init-db", action="store_true", help="Create database tables before ingesting.")
+
     subparsers.add_parser("jobs", help="List scheduler jobs.")
+    subparsers.add_parser("system", help="Show integrated A-H system overview.")
 
     job = subparsers.add_parser("job", help="Run a scheduler job.")
     job.add_argument("job_name", help="Job name, or 'all'.")
@@ -97,11 +103,35 @@ def main() -> None:
         print(f"Wrote {len(points)} product history points to {args.output}")
         return
 
+    if command == "ingest":
+        from .db.ingestion import ingest_raw_events_file
+        from .db.init_db import init_db
+        from .db.session import SessionLocal
+
+        if args.init_db:
+            init_db()
+        with SessionLocal() as session:
+            stats = ingest_raw_events_file(args.input, session, observed_date=args.date)
+        print(
+            "Ingested "
+            f"{stats['raw_events']} raw events, {stats['facts']} facts, "
+            f"{stats['products']} products, {stats['history_points']} history points, "
+            f"{stats['scores']} scores."
+        )
+        return
+
     if command == "jobs":
         from .scheduler import JOB_REGISTRY
 
         for job_name in JOB_REGISTRY:
             print(job_name)
+        return
+
+    if command == "system":
+        import json
+        from .integrated_system import system_overview
+
+        print(json.dumps(system_overview(), ensure_ascii=False, indent=2))
         return
 
     if command == "job":

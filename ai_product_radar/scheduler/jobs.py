@@ -1,8 +1,14 @@
 from __future__ import annotations
 
-from dataclasses import dataclass
+import json
+from dataclasses import asdict, dataclass
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Callable
+
+from ai_product_radar.io import load_products
+from ai_product_radar.report import write_reports
+
 
 @dataclass(frozen=True)
 class SchedulerContext:
@@ -10,6 +16,7 @@ class SchedulerContext:
     raw_events_path: Path = Path("raw_events/tiktok_shop.jsonl")
     reports_dir: Path = Path("reports")
     sample_products_path: Path = Path("data/sample_products.csv")
+    dry_run: bool = True
 
 
 @dataclass(frozen=True)
@@ -17,10 +24,13 @@ class JobResult:
     job_name: str
     status: str
     detail: str = ""
+    started_at: str = ""
+    finished_at: str = ""
 
 
 def _success(job_name: str, detail: str = "") -> JobResult:
-    return JobResult(job_name=job_name, status="success", detail=detail)
+    now = datetime.now(timezone.utc).isoformat()
+    return JobResult(job_name=job_name, status="success", detail=detail, started_at=now, finished_at=now)
 
 
 def daily_crawler_job(context: SchedulerContext) -> JobResult:
@@ -54,8 +64,9 @@ def alert_trigger(context: SchedulerContext) -> JobResult:
 
 
 def report_generator(context: SchedulerContext) -> JobResult:
-    generate_report_task.delay(str(context.sample_products_path))
-    return _success("report_generator", str(context.sample_products_path))
+    products = load_products(context.sample_products_path)
+    md_path, json_path = write_reports(products, context.reports_dir, datetime.now(timezone.utc).date())
+    return _success("report_generator", f"{md_path},{json_path}")
 
 
 def system_monitor(context: SchedulerContext) -> JobResult:
@@ -92,6 +103,13 @@ def run_all_jobs(context: SchedulerContext | None = None) -> list[JobResult]:
     return [job(run_context) for job in JOB_REGISTRY.values()]
 
 
+def result_to_json(result: JobResult | list[JobResult]) -> str:
+    if isinstance(result, list):
+        payload = [asdict(item) for item in result]
+    else:
+        payload = asdict(result)
+    return json.dumps(payload, ensure_ascii=False, indent=2)
+
+
 def enqueue_daily_report() -> str:
-    result = generate_report_task.delay()
-    return str(result.id)
+    return report_generator(SchedulerContext()).detail

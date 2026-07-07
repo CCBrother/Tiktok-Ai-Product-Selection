@@ -3,6 +3,7 @@
 import { Search, SlidersHorizontal } from "lucide-react";
 import { useMemo, useState } from "react";
 import type { ProductRow } from "../lib/api";
+import { formatProductName } from "../lib/productNames";
 import { ProductCard } from "./ProductCard";
 import { TrendChart } from "./TrendChart";
 
@@ -13,6 +14,11 @@ export function ProductExplorer({ products }: { products: ProductRow[] }) {
   const [level, setLevel] = useState<Level>("全部");
   const [category, setCategory] = useState("全部");
   const [minScore, setMinScore] = useState(0);
+  const sCount = products.filter((item) => item.decision.recommendation_level === "S").length;
+  const aCount = products.filter((item) => item.decision.recommendation_level === "A").length;
+  const avgScore = Math.round(products.reduce((sum, item) => sum + item.score.ai_score, 0) / Math.max(products.length, 1));
+  const topGrowth = Math.max(...products.map((item) => item.score.growth_score));
+  const topProduct = products[0];
 
   const categories = useMemo(
     () => ["全部", ...Array.from(new Set(products.map((item) => item.category))).sort()],
@@ -21,7 +27,7 @@ export function ProductExplorer({ products }: { products: ProductRow[] }) {
 
   const filtered = useMemo(() => {
     return products
-      .filter((item) => item.product_name.toLowerCase().includes(query.toLowerCase()))
+      .filter((item) => formatProductName(item.product_name).toLowerCase().includes(query.toLowerCase()))
       .filter((item) => level === "全部" || item.decision.recommendation_level === level)
       .filter((item) => category === "全部" || item.category === category)
       .filter((item) => item.score.ai_score >= minScore)
@@ -29,10 +35,39 @@ export function ProductExplorer({ products }: { products: ProductRow[] }) {
   }, [category, level, minScore, products, query]);
 
   return (
-    <div className="dashboard-grid">
-      <section className="panel main-panel">
+    <div className="radar-layout">
+      <aside className="radar-left">
+        <div className="brand-block">
+          <span>AI PRODUCT RADAR</span>
+          <h1>AI产品雷达</h1>
+          <p>美国 TikTok Shop 7-30天病毒潜力</p>
+        </div>
+
+        <nav className="side-nav" aria-label="Dashboard sections">
+          <a href="/">顶级商机</a>
+          <a href="#ranking">趋势排名</a>
+          <a href="#signals">评分信号</a>
+        </nav>
+
+        <div className="data-status" aria-label="data source status">
+          <strong>演示数据</strong>
+          <span>产品、评分和趋势来自本地样例文件；商品图为本地占位图。</span>
+        </div>
+
+        <div className="metrics">
+          <div className="metric"><span>候选产品</span><strong>{products.length}</strong></div>
+          <div className="metric"><span>S/A级商机</span><strong>{sCount + aCount}</strong></div>
+          <div className="metric"><span>平均AI分</span><strong>{avgScore}</strong></div>
+          <div className="metric"><span>最高增长分</span><strong>{topGrowth}</strong></div>
+        </div>
+      </aside>
+
+      <section className="radar-center panel main-panel" id="ranking">
         <div className="panel-head">
-          <h2>Opportunity Ranking</h2>
+          <div>
+            <span className="eyebrow">Opportunity Ranking</span>
+            <h2>顶级商机</h2>
+          </div>
           <span>{filtered.length} products</span>
         </div>
 
@@ -69,19 +104,42 @@ export function ProductExplorer({ products }: { products: ProductRow[] }) {
         </div>
       </section>
 
-      <aside className="side-stack">
+      <aside className="radar-right side-stack" id="signals">
+        <section className="panel hero-signal">
+          <div className="panel-head">
+            <div>
+              <span className="eyebrow">Top Signal</span>
+              <h2>今日重点</h2>
+            </div>
+            <span>{topProduct?.decision.recommendation_level}</span>
+          </div>
+          <strong>{topProduct ? formatProductName(topProduct.product_name) : "No product"}</strong>
+          <p>{topProduct?.score.explanation}</p>
+          <div className="signal-strip">
+            <span>AI {topProduct?.score.ai_score ?? 0}</span>
+            <span>Growth {topProduct?.score.growth_score ?? 0}</span>
+            <span>Viral {topProduct?.score.viral_score ?? 0}</span>
+          </div>
+        </section>
+
         <section className="panel">
           <div className="panel-head">
-            <h2>Trend Chart</h2>
-            <span>Growth score</span>
+            <div>
+              <span className="eyebrow">Trend Chart</span>
+              <h2>增长趋势</h2>
+            </div>
+            <span>Growth</span>
           </div>
           <TrendChart products={products} />
         </section>
 
         <section className="panel">
           <div className="panel-head">
-            <h2>Score Visualization</h2>
-            <span>Top opportunity</span>
+            <div>
+              <span className="eyebrow">Score Mix</span>
+              <h2>评分结构</h2>
+            </div>
+            <span>Top</span>
           </div>
           <MiniScore product={products[0]} />
         </section>
@@ -101,7 +159,7 @@ function MiniScore({ product }: { product: ProductRow }) {
 
   return (
     <div className="mini-score">
-      <strong>{product.product_name}</strong>
+      <strong>{formatProductName(product.product_name)}</strong>
       {scores.map(([label, value]) => (
         <div className="mini-score-row" key={label}>
           <span>{label}</span>

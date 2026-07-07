@@ -2,7 +2,7 @@ import json
 
 from fastapi.testclient import TestClient
 
-from ai_product_radar.aggregation import aggregate_final_score
+from ai_product_radar.aggregation import NORMALIZED_WEIGHTS, aggregate_final_score
 from ai_product_radar.api import app
 from ai_product_radar.crawler.events import make_event
 from ai_product_radar.growth import calculate_growth_score
@@ -37,7 +37,17 @@ def make_product(**overrides):
 
 
 def test_growth_module_uses_sales_growth():
-    assert calculate_growth_score(make_product(sales_growth_pct_7d=150, mention_growth_pct_7d=10)) == 50
+    assert (
+        calculate_growth_score(
+            make_product(
+                sales_growth_pct_7d=150,
+                sales_growth_pct_30d=150,
+                creator_growth_pct=150,
+                mention_growth_pct_7d=10,
+            )
+        )
+        == 50
+    )
 
 
 def test_aggregation_engine_returns_weighted_score():
@@ -46,15 +56,16 @@ def test_aggregation_engine_returns_weighted_score():
         "trend_score": 80,
         "competition_score": 70,
         "profit_score": 60,
-        "review_score": 50,
-        "lifecycle_score": 40,
         "supply_score": 30,
         "copy_difficulty_score": 20,
-        "content_score": 10,
         "viral_score": 0,
+        "lifecycle_score": 40,
+        "content_score": 10,
+        "risk_score": 0,
     }
 
-    assert aggregate_final_score(component_scores) == 58
+    expected = round(sum(component_scores.get(key, 0) * weight for key, weight in NORMALIZED_WEIGHTS.items()))
+    assert aggregate_final_score(component_scores) == expected
 
 
 def test_product_page_json_normalizes_to_fact():
@@ -110,6 +121,7 @@ def test_e_group_api_endpoints():
         "/opportunity?limit=2",
         "/dashboard-summary",
         "/lifecycle?limit=2",
+        "/system",
     ]
 
     for endpoint in endpoints:

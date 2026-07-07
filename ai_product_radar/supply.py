@@ -26,10 +26,10 @@ def score_low_one_to_five(value: float) -> float:
 def calculate_supply_score(product: ProductSignal) -> int:
     """Supply Model: supplier availability, price stability, MOQ, lead time, shipping cost."""
     supplier_count = score_log(product.supplier_count, scale=80)
-    avg_price_stability = product.avg_price_stability or score_low_one_to_five(product.shipping_complexity)
-    moq_feasibility = product.moq_feasibility or score_inverse(product.min_order_quantity, worst=1000)
-    lead_time_speed = product.lead_time_speed or score_inverse(product.lead_time_days, worst=45)
-    shipping_cost_estimation = product.shipping_cost_estimation or score_low_one_to_five(product.shipping_complexity)
+    avg_price_stability = product.avg_price_stability
+    moq_feasibility = product.moq_feasibility
+    lead_time_speed = product.lead_time_speed
+    shipping_cost_estimation = product.shipping_cost_estimation
 
     return round(
         supplier_count * 0.3
